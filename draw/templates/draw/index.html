@@ -46,19 +46,49 @@
         // console.log(event.point);
        // You may need to add code here if you want to pass any other information.
        socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + "}" );
+   //     for(i = 0; i < received.uid.length; i++){
+   //       var colors = [ 'red', 'green', 'blue', 'magenta', 'purple', 'plum', 'orange' ];
+   //       colors.sort(function(a,b) { return Math.random() > 0.5; } );
+   // console.log(colors[i]);
+   // path.strokeColor = "colors[i]"
     }
+
 
     socket.onmessage = function(receivedMessage) {
         var received = JSON.parse(receivedMessage.data);
+        var collected = {};
         // console.log(received.x);
         console.log("Received: " + JSON.stringify(received));
+
+        //for(i = 0; i < otherPaths.length; i++){
+          //console.log("HIIII " + Object.keys(otherPaths)[i])
+        //collected[Object.keys(otherPaths)[i]]='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);}
         // You will probably want to add some code here to draw more lines.
         if (!otherPaths.hasOwnProperty(received.uid)) {
             otherPaths[received.uid] = new paper.Path();
-            otherPaths[received.uid].strokeColor = "red";
+            //for i = 0; i < received.uid; i++){
+            //otherPaths[received.uid].strokeColor = collected[received.uid]
+            //console.log(collected[received.uid])
+            if(!(received.uid in collected)) {
+              collected[received.uid]='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);
+              otherPaths[received.uid].strokeColor = collected[received.uid]
+            console.log("HIII " + collected[received.uid])} else {
+              otherPaths[received.uid].strokeColor = collected[received.uid]
+            }
         }
         otherPaths[received.uid].add(new paper.Point(received.x, received.y));
-    }
+      }
+//  }
+
+    // socket.onmessage = function(receivedMessage) {
+    //   var received = JSON.parse(receivedMessage.data);
+    //         for(i = 0; i < received.uid.length; i++){
+    //           var colors = [ 'red', 'green', 'blue', 'magenta', 'purple', 'plum', 'orange' ];
+    //           colors.sort(function(a,b) { return Math.random() > 0.5; } );
+    //     console.log(colors[i]);
+    //     path.strokeColor = "colors[i]"
+    //   }
+    // }
 
     socket.onclose = function(e) {
         console.error('Chat socket closed unexpectedly');
