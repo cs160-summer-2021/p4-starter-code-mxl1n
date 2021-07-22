@@ -38,7 +38,8 @@
     path.strokeColor = collected[uid];
     // getting the URL (you may want to use for Exercise 3)
     var url = window.location.href;
-
+    var params = new URLSearchParams(window.location.search);
+    var displaySize = params.get("size");
     var socket = new WebSocket(
         'ws://' + window.location.host + '/ws/draw');
 
@@ -54,30 +55,32 @@
    // path.strokeColor = "colors[i]"
     }
 
+ if (displaySize.toLowerCase() == "large") {
 
-    socket.onmessage = function(receivedMessage) {
-        var received = JSON.parse(receivedMessage.data);
-        // console.log(received.x);
-        console.log("Received: " + JSON.stringify(received));
+     socket.onmessage = function(receivedMessage) {
+         var received = JSON.parse(receivedMessage.data);
+         // console.log(received.x);
+         console.log("Received: " + JSON.stringify(received));
 
-        //for(i = 0; i < otherPaths.length; i++){
-          //console.log("HIIII " + Object.keys(otherPaths)[i])
-        //collected[Object.keys(otherPaths)[i]]='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);}
-        // You will probably want to add some code here to draw more lines.
-        if (!otherPaths.hasOwnProperty(received.uid)) {
-            otherPaths[received.uid] = new paper.Path();
-            //for i = 0; i < received.uid; i++){
-            //otherPaths[received.uid].strokeColor = collected[received.uid]
-            //console.log(collected[received.uid])
-            if(!(received.uid in collected)) {
-                collected[received.uid]= received.color;   //'#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);
-                console.log("HIII " + collected[received.uid]);
-            }
-            console.log("hi");
-            otherPaths[received.uid].strokeColor = collected[received.uid];
-        }
-        otherPaths[received.uid].add(new paper.Point(received.x, received.y));
-      }
+         //for(i = 0; i < otherPaths.length; i++){
+         //console.log("HIIII " + Object.keys(otherPaths)[i])
+         //collected[Object.keys(otherPaths)[i]]='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);}
+         // You will probably want to add some code here to draw more lines.
+         if (!otherPaths.hasOwnProperty(received.uid)) {
+             otherPaths[received.uid] = new paper.Path();
+             //for i = 0; i < received.uid; i++){
+             //otherPaths[received.uid].strokeColor = collected[received.uid]
+             //console.log(collected[received.uid])
+             if(!(received.uid in collected)) {
+                 collected[received.uid]= received.color;   //'#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);
+                 console.log("HIII " + collected[received.uid]);
+             }
+             console.log("hi");
+             otherPaths[received.uid].strokeColor = collected[received.uid];
+         }
+         otherPaths[received.uid].add(new paper.Point(received.x, received.y));
+     }
+ }
 //  }
 
     // socket.onmessage = function(receivedMessage) {
