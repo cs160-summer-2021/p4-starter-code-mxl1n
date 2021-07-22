@@ -11,12 +11,17 @@
     <script type="text/javascript" src="{% static 'draw/vendor/paper/paper-full.min.js' %}"></script>
 
     <style type="text/css">
+     #myCanvas {
+         border: 2px solid #000;
+         border-radius: 3px;
+         margin: 20px;
+     }
     </style>
 
 </head>
 <body>
     <!-- You may change the dimensions of this canvas -->
-    <canvas id="myCanvas" width="750px" height="750px"></canvas>
+    <canvas id="myCanvas" width="500px" height="500px"></canvas>
 </body>
 <script>
 
@@ -27,6 +32,8 @@
     var path = new paper.Path();
     var uid = Date.now() % 10000;
     path.strokeColor = "red";
+    // otherPaths is a dictionary, keys are uid's (user ids) and values are paper.js paths
+    var otherPaths = {};
 
     // getting the URL (you may want to use for Exercise 3)
     var url = window.location.href;
@@ -35,15 +42,22 @@
         'ws://' + window.location.host + '/ws/draw');
 
     tool.onMouseMove = function(event) { //http://paperjs.org/reference/tool/ path examples
-       path.add(event.point);
+        path.add(event.point);
+        // console.log(event.point);
        // You may need to add code here if you want to pass any other information.
        socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + "}" );
     }
 
     socket.onmessage = function(receivedMessage) {
         var received = JSON.parse(receivedMessage.data);
+        // console.log(received.x);
         console.log("Received: " + JSON.stringify(received));
         // You will probably want to add some code here to draw more lines.
+        if (!otherPaths.hasOwnProperty(received.uid)) {
+            otherPaths[received.uid] = new paper.Path();
+            otherPaths[received.uid].strokeColor = "red";
+        }
+        otherPaths[received.uid].add(new paper.Point(received.x, received.y));
     }
 
     socket.onclose = function(e) {
