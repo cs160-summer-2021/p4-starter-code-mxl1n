@@ -31,10 +31,11 @@
     var tool = new paper.Tool();
     var path = new paper.Path();
     var uid = Date.now() % 10000;
-    path.strokeColor = "red";
     // otherPaths is a dictionary, keys are uid's (user ids) and values are paper.js paths
-    var otherPaths = {};
-
+    var otherPaths = {uid: path};
+    var collected = {};
+    collected[uid]='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);
+    path.strokeColor = collected[uid];
     // getting the URL (you may want to use for Exercise 3)
     var url = window.location.href;
 
@@ -56,7 +57,6 @@
 
     socket.onmessage = function(receivedMessage) {
         var received = JSON.parse(receivedMessage.data);
-        var collected = {};
         // console.log(received.x);
         console.log("Received: " + JSON.stringify(received));
 
@@ -70,11 +70,11 @@
             //otherPaths[received.uid].strokeColor = collected[received.uid]
             //console.log(collected[received.uid])
             if(!(received.uid in collected)) {
-              collected[received.uid]='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);
-              otherPaths[received.uid].strokeColor = collected[received.uid]
-            console.log("HIII " + collected[received.uid])} else {
-              otherPaths[received.uid].strokeColor = collected[received.uid]
+                collected[received.uid]='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);
+                console.log("HIII " + collected[received.uid]);
             }
+            console.log("hi");
+            otherPaths[received.uid].strokeColor = collected[received.uid];
         }
         otherPaths[received.uid].add(new paper.Point(received.x, received.y));
       }
