@@ -46,7 +46,7 @@
         path.add(event.point);
         // console.log(event.point);
        // You may need to add code here if you want to pass any other information.
-       socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + "}" );
+       socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + ", \"color\" : \"" + collected[uid] +"\"}" );
    //     for(i = 0; i < received.uid.length; i++){
    //       var colors = [ 'red', 'green', 'blue', 'magenta', 'purple', 'plum', 'orange' ];
    //       colors.sort(function(a,b) { return Math.random() > 0.5; } );
@@ -70,7 +70,7 @@
             //otherPaths[received.uid].strokeColor = collected[received.uid]
             //console.log(collected[received.uid])
             if(!(received.uid in collected)) {
-                collected[received.uid]='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);
+                collected[received.uid]= received.color;   //'#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);
                 console.log("HIII " + collected[received.uid]);
             }
             console.log("hi");
