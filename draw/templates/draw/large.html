@@ -4,56 +4,176 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>P4 Drawing</title>
+    <title>Large Screen</title>
 
     <link rel="stylesheet" type="text/css" href="{% static 'draw/vendor/bootstrap/css/bootstrap.min.css' %}">
     <script type="text/javascript" src="{% static 'draw/vendor/jquery/jquery-3.3.1.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'draw/vendor/paper/paper-full.min.js' %}"></script>
-
+    <!-- import d3js -->
+    <script type="text/javascript" src="{% static 'draw/vendor/d3js/d3.v7.min.js' %}"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/d3@7"></script> -->
+    <!-- <script src="https://d3js.org/d3.v6.min.js"></script> -->
     <style type="text/css">
-     #myCanvas {
+     svg {
+         position: absolute;
+         top: 20px;
+         left: 20px;
          border: 2px solid #000;
          border-radius: 3px;
          margin: 20px;
+     }.circle {
+	  fill: #fff;
+	  stroke: steelblue;
+	     /* stroke-width: 3px; */
+	 } .link {
+         stroke: #000;
+         stroke-width: 2px;
+         fill: none;
+     } .image {
+         width: 200px;
+         height: 200px;
+         border: 5px solid #000 !important;
+         background: white;
+         z-index: 2;
+     }
+     .root,.node {
+         background: white !important;
+     }
+     .root .image {
+         width: 350px;
+         height: 350px;
+     }
+     .text {
+         font-size: 24px;
+     }
+     .rect {
+         stroke: #000;
+         stroke-width: 2px;
+         fill: #FFF;
      }
     </style>
 
 </head>
 <body>
     <!-- You may change the dimensions of this canvas -->
-    <canvas id="myCanvas" width="500px" height="500px"></canvas>
+    <!-- <canvas id="myCanvas" width="1000px" height="500px"></canvas> -->
 </body>
 <script>
+ // var testImage = new Image(100, 100);
+ testImage = 'https://img.pokemondb.net/sprites/ruby-sapphire/normal/bulbasaur.png';
+ // graph of images stored in root
+ var root = {label: 0, image: testImage, children: []};
+ root.children[0] = {label: 1, image: testImage, children: []};
+ root.children[1] = {label: 2, image: testImage, children: []};
+ root.children[0].children[0] = {label: 3, image: testImage, children: []};
+ // below function partially based on tutorials https://medium.com/analytics-vidhya/creating-a-radial-tree-using-d3-js-for-javascript-be943e23b74e
+ // and https://www.goodmarketing.club/guide/d3-js-how-to-build-a-tree-chart-w-line-by-line-code-explanations/
+ function generateGraph(root) {
+     var t = d3.transition().duration(800).ease(d3.easeLinear);
+     //reset
+     d3.selectAll("svg > *").remove();
+     // convert to d3 data format
+     var treeData = d3.hierarchy(root);
+     // make tree
+     var gitTree = d3.tree().size([500,500]);
+     // put the data in the tree
+     var visualTree = gitTree(treeData); //??? do i have to process root first
+     // get the nodes, links of the tree
+     var nodes = visualTree.descendants();
+     var links = visualTree.links();
+     var svg = d3.select('body').append('svg').attr('width', 2000).attr('height', 1000);
+     var nodeHeight = 200;
+     var nodeWidth = 200;
+     var rootHeight = 350;
+     var rootWidth = 350;
+     // var treeNodes = d3.select("svg g.nodes");
+     // treeNodes.selectAll("circle").data([nodes[0]]).enter().append("circle")
+     //          .attr("class", "circle").attr("transform", d => `translate(${d.y}, ${d.x})`).attr("r", 80);
 
-    // setting up the canvas and one paper tool
-    var canvas = document.getElementById('myCanvas');
-    paper.setup(canvas);
-    var tool = new paper.Tool();
-    var path = new paper.Path();
-    var uid = Date.now() % 10000;
-    // otherPaths is a dictionary, keys are uid's (user ids) and values are paper.js paths
-    var otherPaths = {uid: path};
-    var collected = {};
-    collected[uid]='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);
-    path.strokeColor = collected[uid];
-    // getting the URL (you may want to use for Exercise 3)
-    var url = window.location.href;
-    var params = new URLSearchParams(window.location.search);
-    var displaySize = params.get("size");
-    var socket = new WebSocket(
-        'ws://' + window.location.host + '/ws/draw');
+     // style the links, nodes
+     // credit also to https://stackoverflow.com/questions/16004915/d3-js-links-between-nodes-not-rendering-as-lines
+     var gg = svg.append("g").attr('transform', "translate("+(rootWidth+50)+","+50+")");
+     // root node
+     // var rootNode = gg.selectAll(".node").data(nodes.slice(0,1)).join("g").attr("class", "root").attr("transform", function(d) {
+     //     return  `translate(${d.y-200}, ${d.x-100})`;
+     // });
+     // other nodes
+     var link = gg.selectAll(".link").data(links).join("path")
+                  .attr("class", "link")
+                  .attr("d", d3.linkHorizontal().x(d => d.y).y(d => d.x));
+     var node = gg.selectAll(".node").data(nodes).join("g").attr("class", "node").attr("transform", function(d) {
+         return  `translate(${d.y-100}, ${d.x-100})`;
+     });
+     var rootNode = gg.selectAll(".node").data(nodes.slice(0,1)).attr("class", "root").attr("transform", d => `translate(${d.y-rootWidth}, ${d.x-rootHeight/2})`);
+     node.append("rect").attr("class", "rect").attr("width", nodeWidth).attr("height", nodeHeight);
+     rootNode.append("rect").attr("class", "rect").attr("width", rootWidth).attr("height", rootHeight);
+     node.append("image").attr("class", "image").attr("xlink:href", function (d) {return d.data.image});
+     node.append("text").attr("class", "text").text(d => d.data.label).attr("transform", d => `translate(2, -8)`);
+ }
+ generateGraph(root);
 
-    tool.onMouseMove = function(event) { //http://paperjs.org/reference/tool/ path examples
-        path.add(event.point);
-        // console.log(event.point);
-       // You may need to add code here if you want to pass any other information.
-       socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + ", \"color\" : \"" + collected[uid] +"\"}" );
-   //     for(i = 0; i < received.uid.length; i++){
-   //       var colors = [ 'red', 'green', 'blue', 'magenta', 'purple', 'plum', 'orange' ];
-   //       colors.sort(function(a,b) { return Math.random() > 0.5; } );
-   // console.log(colors[i]);
-   // path.strokeColor = "colors[i]"
-    }
+
+ socket.onmessage = function(receivedMessage) {
+     var received = JSON.parse(receivedMessage.data);
+ }
+
+ // var images = {0: };
+ //placer holder image for now
+ // update(root);
+ // function update() {
+ //     var nodes = gitTree.nodes(root).reverse(),
+ //         links = gitTree.links(nodes);
+ //
+ //     var node = svg.selectAll("g.node")
+ //                   .data(nodes, function(d) { return d.id|| (d.id= ++i); });
+ //
+ //     // Enter the nodes.
+ //     var nodeEnter = node.enter().append("g")
+ //                         .attr("class", "node")
+ //                         .attr("transform", function(d) {
+ //                             return "translate(" + d.x + "," + d.y + ")"; });
+ //
+ //     nodeEnter.append("circle")
+ //              .attr("r", 10)
+ //              .style("fill", "#fff");
+ //
+ //     // nodeEnter.append("text")
+ //     //          .attr("y", function(d) {
+ //     //              return d.children || d._children ? -18 : 18; })
+ //     //          .attr("dy", ".35em")
+ //     //          .attr("text-anchor", "middle")
+ //     //          .text(function(d) { return d.label; })
+ //     //          .style("fill-opacity", 1);
+ // }
+ // setting up the canvas and one paper tool
+ // var canvas = document.getElementById('myCanvas');
+ // paper.setup(canvas);
+ // var tool = new paper.Tool();
+ // var path = new paper.Path();
+ // var uid = Date.now() % 10000;
+ // // otherPaths is a dictionary, keys are uid's (user ids) and values are paper.js paths
+ // var otherPaths = {uid: path};
+ // var collected = {};
+ // collected[uid]='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);
+ // path.strokeColor = collected[uid];
+ // // getting the URL (you may want to use for Exercise 3)
+ // var url = window.location.href;
+ // var params = new URLSearchParams(window.location.search);
+ // var displaySize = params.get("size");
+ // var socket = new WebSocket(
+ //     'ws://' + window.location.host + '/ws/draw');
+ //
+ // tool.onMouseMove = function(event) { //http://paperjs.org/reference/tool/ path examples
+ //     path.add(event.point);
+ //     // console.log(event.point);
+ //    // You may need to add code here if you want to pass any other information.
+ //    socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + ", \"color\" : \"" + collected[uid] +"\"}" );
+ //    //     for(i = 0; i < received.uid.length; i++){
+ //       var colors = [ 'red', 'green', 'blue', 'magenta', 'purple', 'plum', 'orange' ];
+ //       colors.sort(function(a,b) { return Math.random() > 0.5; } );
+ // console.log(colors[i]);
+ // path.strokeColor = "colors[i]"
+ // }
 
  if (displaySize.toLowerCase() == "large") {
 
@@ -81,21 +201,21 @@
          otherPaths[received.uid].add(new paper.Point(received.x, received.y));
      }
  }
-//  }
+ //  }
 
-    // socket.onmessage = function(receivedMessage) {
-    //   var received = JSON.parse(receivedMessage.data);
-    //         for(i = 0; i < received.uid.length; i++){
-    //           var colors = [ 'red', 'green', 'blue', 'magenta', 'purple', 'plum', 'orange' ];
-    //           colors.sort(function(a,b) { return Math.random() > 0.5; } );
-    //     console.log(colors[i]);
-    //     path.strokeColor = "colors[i]"
-    //   }
-    // }
+ // socket.onmessage = function(receivedMessage) {
+ //   var received = JSON.parse(receivedMessage.data);
+ //         for(i = 0; i < received.uid.length; i++){
+ //           var colors = [ 'red', 'green', 'blue', 'magenta', 'purple', 'plum', 'orange' ];
+ //           colors.sort(function(a,b) { return Math.random() > 0.5; } );
+ //     console.log(colors[i]);
+ //     path.strokeColor = "colors[i]"
+ //   }
+ // }
 
-    socket.onclose = function(e) {
-        console.error('Chat socket closed unexpectedly');
-    };
+ socket.onclose = function(e) {
+     console.error('Chat socket closed unexpectedly');
+ };
 
 </script>
 </html>

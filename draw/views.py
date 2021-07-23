@@ -6,8 +6,10 @@ def index(request):
 
 def large(request):
     return render(request, 'draw/large.html')
+
 def small(request):
     return render(request, 'draw/small.html')
+
 def room(request, room_name):
     return render(request, 'draw/room.html', {
         'room_name': room_name
