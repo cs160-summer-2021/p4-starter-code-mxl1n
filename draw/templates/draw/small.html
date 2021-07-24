@@ -16,55 +16,22 @@
          border-radius: 3px;
          margin: 20px;
      }
-     /* Dropdown Button */
-     .btn {
-       background-color: #2196F3;
-       color: white;
-       padding: 16px;
-       font-size: 16px;
-       border: none;
-       outline: none;
-     }
-
-     /* The container <div> - needed to position the dropdown content */
-     .dropdown {
-       position: absolute;
-       display: inline-block;
-     }
-
-     /* Dropdown Content (Hidden by Default) */
-     .dropdown-content {
-       display: none;
-       position: absolute;
-       background-color: #f1f1f1;
-       min-width: 160px;
-       z-index: 1;
-     }
-
-     /* Links inside the dropdown */
-     .dropdown-content a {
-       color: black;
-       padding: 12px 16px;
-       text-decoration: none;
-       display: block;
-     }
-
-     /* Change color of dropdown links on hover */
-     .dropdown-content a:hover {background-color: #ddd}
-
-     /* Show the dropdown menu on hover */
-     .dropdown:hover .dropdown-content {
-       display: block;
-     }
-
-     /* Change the background color of the dropdown button when the dropdown content is shown */
-     .btn:hover, .dropdown:hover .btn  {
-       background-color: #0b7dda;
-     }
+    }
     </style>
 
 </head>
 <body>
+  <div id="container">
+    <form>
+        <label for="framework">Select a User</label>
+        <select id="framework">
+
+        </select>
+
+        <input type="button" id="btn" value="Endorse">
+    </form>
+</div>
+<div class="result"></div>
     <!-- You may change the dimensions of this canvas -->
     <canvas id="myCanvas" width="500px" height="500px"></canvas>
 </body>
@@ -77,6 +44,7 @@
     var path = new paper.Path();
     var uid = Date.now() % 10000;
     // otherPaths is a dictionary, keys are uid's (user ids) and values are paper.js paths
+    var dropList=[];
     var otherPaths = {uid: path};
     var collected = {};
     collected[uid]='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6);
@@ -92,12 +60,35 @@
         path.add(event.point);
         // console.log(event.point);
        // You may need to add code here if you want to pass any other information.
+       // if (!(dropList.includes(uid))){
+       //   dropList.push(uid)}
        socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + ", \"color\" : \"" + collected[uid] +"\"}" );
-   //     for(i = 0; i < received.uid.length; i++){
-   //       var colors = [ 'red', 'green', 'blue', 'magenta', 'purple', 'plum', 'orange' ];
-   //       colors.sort(function(a,b) { return Math.random() > 0.5; } );
-   // console.log(colors[i]);
-   // path.strokeColor = "colors[i]"
+    }
+
+    const btn = document.querySelector('#btn');
+    const sb = document.querySelector('#framework')
+    btn.onclick = (event) => {
+        event.preventDefault();
+
+    sb.addEventListener('change', (event) => {
+      const result = document.querySelector('.result');
+      result.textContent = `You like ${event.target.value}`;
+    });
+        alert("You endorsed User " + btn);
+    };
+    socket.onmessage = function(receivedMessage) {
+    var received = JSON.parse(receivedMessage.data);
+     if (!(dropList.includes(received.uid))){
+       dropList.push(received.uid)
+       for(i = 0; i < dropList.length; i++){
+       var para = document.createElement("option");
+       para.value= i
+       const node = document.createTextNode(dropList[i]);
+       para.appendChild(node);
+       const element = document.getElementById("framework");
+       element.appendChild(para);
+     }
+      }
     }
 
  if (displaySize.toLowerCase() == "large") {
@@ -126,68 +117,21 @@
          otherPaths[received.uid].add(new paper.Point(received.x, received.y));
      }
  }
-//  }
-
-    // socket.onmessage = function(receivedMessage) {
-    //   var received = JSON.parse(receivedMessage.data);
-    //         for(i = 0; i < received.uid.length; i++){
-    //           var colors = [ 'red', 'green', 'blue', 'magenta', 'purple', 'plum', 'orange' ];
-    //           colors.sort(function(a,b) { return Math.random() > 0.5; } );
-    //     console.log(colors[i]);
-    //     path.strokeColor = "colors[i]"
-    //   }
-    // }
 
     socket.onclose = function(e) {
         console.error('Chat socket closed unexpectedly');
     };
 
-    $('#mycoolbutton').click(function() {
-  window.open('http://www.petfinder.com');
-  return false;
-});
 /* When the user clicks on the button,
 toggle between hiding and showing the dropdown content */
-function myFunction() {
-  document.getElementById("myDropdown").classList.toggle("show");
-}
 
 // Close the dropdown menu if the user clicks outside of it
-window.onclick = function(event) {
-  if (!event.target.matches('.dropbtn')) {
-    var dropdowns = document.getElementsByClassName("dropdown-content");
-    var i;
-    for (i = 0; i < dropdowns.length; i++) {
-      var openDropdown = dropdowns[i];
-      if (openDropdown.classList.contains('show')) {
-        openDropdown.classList.remove('show');
-      }
-    }
-  }
-}
-
+// const btn = document.querySelector('#btn');
+// const sb = document.querySelector('#framework')
+// btn.onclick = (event) => {
+//     event.preventDefault();
+//     alert("hooray");
+// };
 </script>
-
-
-<script>
-
-</script>
-
-<div class="myDiv">
-<!-- Font Awesome Icon Library -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
-<button class="btn">Endorse</button>
-<div class="dropdown">
-  <button class="btn" style="border-left:1px solid navy">
-    <i class="fa fa-caret-down"></i>
-  </button>
-  <div class="dropdown-content">
-    <a href="#">Alice</a>
-    <a href="#">Bob</a>
-    <a href="#">Carol</a>
-  </div>
-</div>
-</div>
 
 </html>
