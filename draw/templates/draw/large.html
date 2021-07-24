@@ -196,7 +196,7 @@
              case "merge":
                  // compute sum of two images and send it to both users
                  //
-
+                 createMergeScreen(userPositions[received.uid], received.data);
                  break;
              case "mergeDone":
                  // delete the two merged nodes
@@ -270,11 +270,12 @@
      //     console.log("hi");
      //     ctx.drawImage(img3, 0, 0, 600, 600);
      // };
- }
  $("#finish-merge").click(function () {
+
      $("#merge-box").remove();
      generateGraph(root);
  });
+ }
  // createMergeScreen();
  // var images = {0: };
  //placer holder image for now
