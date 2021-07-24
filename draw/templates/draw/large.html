@@ -51,37 +51,80 @@
          stroke-width: 2px;
          fill: #FFF;
      }
+     #merge-canvas {
+         border: 3px solid #000;
+     }
+     #merge-wrapper {
+         position: absolute;
+         z-index: 100;
+         background-color: lightgrey;
+         top: 150px;
+         left: 500px;
+     }
     </style>
 
 </head>
 <body>
     <!-- You may change the dimensions of this canvas -->
     <!-- <canvas id="myCanvas" width="1000px" height="500px"></canvas> -->
+    <template id="merge-box">
+        <div id="merge-wrapper">
+        <h1>Merge in progress</h1>
+        <canvas id="merge-canvas" width="600px" height="600px"></canvas>
+        <br>
+        <button type="button" id="finish-merge">Finish Merge</button></div>
+        <div>suggestions</div>
+    </template>
 </body>
 <script>
  // var testImage = new Image(100, 100);
- testImage = 'https://img.pokemondb.net/sprites/ruby-sapphire/normal/bulbasaur.png';
+ // source https://en.wiktionary.org/wiki/File:Square_-_black_simple.svg
+    var socket = new WebSocket(
+        'ws://' + window.location.host + '/ws/draw');
+ var initImg = "{% static 'draw/img/square.png' %}";
+ // testImage = "{% static 'draw/img/square.png' %}";//"/static/draw/img/stickfigure.jpg";
+ // testImage2 = "{% static 'draw/img/square2.png' %}";
+ // testImage3 = "{% static 'draw/img/square3.png' %}";
+ // var img = new Image(600,600);
+ // img.src = testImage;
+ // var img2 = new Image(600,600);
+ // img2.src = testImage2;
+ //dictionary of user id to the image id they are currently on; default is everyone is the 1st image
+ var userPositions = {};
+ //dictionary of image ids to the image url
+ var imageData = {0: initImg};
  // graph of images stored in root
- var root = {label: 0, image: testImage, children: []};
- root.children[0] = {label: 1, image: testImage, children: []};
- root.children[1] = {label: 2, image: testImage, children: []};
- root.children[0].children[0] = {label: 3, image: testImage, children: []};
+ // format:
+ // uid is who made it
+ // imgid is the image id
+ // meta is additional text
+ var root = {uid: -1, imgid: 0, meta: "(Master)", children: []};
+ // root.children[0] = {uid: 0, label: 1, image: testImage2, children: []};
+ // root.children[1] = {uid: 0, label: 2, image: testImage3, children: []};
+ // root.children[2] = {uid: 0, label: 2, image: testImage, children: []};
+
+ // root.children[3] = {uid: 0, label: 2, image: testImage, children: []};
+ // root.children[0].children[0] = {uid: 0, label: 4, image: testImage, children: []};
+ // root.children[2].children[0] = {uid: 0, label: 5, image: testImage, children: []};
+ // root.children[2].children[0].children[0] = {uid: 0, label: 6, image: testImage, children: []};
+ // root.children[2].children[0].children[1] = root.children[0].children[0];
+
  // below function partially based on tutorials https://medium.com/analytics-vidhya/creating-a-radial-tree-using-d3-js-for-javascript-be943e23b74e
  // and https://www.goodmarketing.club/guide/d3-js-how-to-build-a-tree-chart-w-line-by-line-code-explanations/
- function generateGraph(root) {
+ function generateGraph(root, depth) {
      var t = d3.transition().duration(800).ease(d3.easeLinear);
      //reset
      d3.selectAll("svg > *").remove();
      // convert to d3 data format
      var treeData = d3.hierarchy(root);
      // make tree
-     var gitTree = d3.tree().size([500,500]);
+     var gitTree = d3.tree().size([1000,1000]);
      // put the data in the tree
      var visualTree = gitTree(treeData); //??? do i have to process root first
      // get the nodes, links of the tree
      var nodes = visualTree.descendants();
      var links = visualTree.links();
-     var svg = d3.select('body').append('svg').attr('width', 2000).attr('height', 1000);
+     var svg = d3.select('body').append('svg').attr('width', 1600).attr('height', 1150);
      var nodeHeight = 200;
      var nodeWidth = 200;
      var rootHeight = 350;
@@ -107,16 +150,132 @@
      var rootNode = gg.selectAll(".node").data(nodes.slice(0,1)).attr("class", "root").attr("transform", d => `translate(${d.y-rootWidth}, ${d.x-rootHeight/2})`);
      node.append("rect").attr("class", "rect").attr("width", nodeWidth).attr("height", nodeHeight);
      rootNode.append("rect").attr("class", "rect").attr("width", rootWidth).attr("height", rootHeight);
-     node.append("image").attr("class", "image").attr("xlink:href", function (d) {return d.data.image});
-     node.append("text").attr("class", "text").text(d => d.data.label).attr("transform", d => `translate(2, -8)`);
+     node.append("image").attr("class", "image").attr("xlink:href", function (d) {return imageData[d.data.imgid]});
+     node.append("text").attr("class", "text")
+         .text(d => "Img ID: " + d.data.imgid + " " + d.data.meta + " by " + d.data.uid)
+         .attr("transform", d => `translate(2, -8)`);
+     // node.append("text").attr("class", "text").text(d => "User ID: " + d.data.uid).attr("transform", d => `translate(2, -20)`);
  }
  generateGraph(root);
 
-
+ // find node with dfs given image id
+ function findNode(imgid) {
+     var stack = [root];
+     while (stack.length > 0) {
+         let a = stack.pop();
+         if (a.label == imgid) {
+             return a;
+         }
+         for (var c of a.children) {
+             stack.push(c);
+         }
+     }
+     return -1;
+ }
+ // JSON message format
+ // uid: user id (set to -1 if broadcasted from large screen)
+ // (ignore) current: which Img ID they are currently on
+ // type: type of data being sent. either branch, push, merge, endorse
+ // data: either going to be image id or image data
  socket.onmessage = function(receivedMessage) {
      var received = JSON.parse(receivedMessage.data);
+     if (uid >= 0) {
+         switch (received.type) {
+             case "init":
+                 //when a small screen is loaded, just the uid is sent
+                 break;
+             case "branch":
+                 // store uid position in some dictionary
+                 // send image data to user along with image id
+                 //
+                 break;
+             case "push":
+                 // create a new node in graph
+                 // reload graph
+                 break;
+             case "merge":
+                 // compute sum of two images and send it to both users
+                 //
+
+                 break;
+             case "mergeDone":
+                 // delete the two merged nodes
+                 // replace with new one with new image data
+                 break;
+             case "endorse":
+                 // add to some counter the image getting endorsed
+                 break;
+             default:
+                 console.log("wrong json type");
+         }
+     }
  }
 
+ function createMergeScreen(imgid1, imgid2) {
+     //clear default screen
+     d3.selectAll("svg > *").remove();
+     // make stuff appear
+     $("body").append($("#merge-box").html());
+     //setup canvas
+     var mc = document.getElementById("merge-canvas");
+     paper.setup(mc);
+     var tool = new paper.Tool();
+     var path = new paper.Path();
+     path.strokeColor = "black";
+     path.strokeWidth = 3;
+     tool.onMouseDown = function(event) { //http://paperjs.org/reference/tool/ path examples
+         path = new paper.Path();
+         path.strokeColor = "black";
+     path.strokeWidth = 3;
+         // console.log(event.point);
+         // You may need to add code here if you want to pass any other information.
+         // socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + ", \"color\" : \"" + collected[uid] +"\"}" );
+         //     for(i = 0; i < received.uid.length; i++){
+     }
+     tool.onMouseDrag = function(event) { //http://paperjs.org/reference/tool/ path examples
+         path.add(event.point);
+         console.log(path);
+         // console.log(event.point);
+         // You may need to add code here if you want to pass any other information.
+         // socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + ", \"color\" : \"" + collected[uid] +"\"}" );
+         //     for(i = 0; i < received.uid.length; i++){
+     }
+     //put image in the canvas
+     var ctx = mc.getContext('2d');
+     // img.addEventListener("load", e => ctx.drawImage(img, 0, 0));
+     // console.log(img2);
+     // ctx.drawImage(img, 0, 0);
+     var mImg1 = new Image();
+     mImg1.src = imageData[imgid1];
+     var mImg2 = new Image();
+     mImg2.src = imageData[imgid2];
+     mImg1.onload = function () {
+         ctx.drawImage(mImg1, 0, 0,600,600);
+     };
+     mImg2.onload = function () {
+         ctx.drawImage(mImg2, 0, 0,600,600);
+     };
+     // testImage2 = "{% static 'draw/img/square2.png' %}";
+     // img2 = new Image();
+     // img2.src = testImage2;
+     // testImage2 = "{% static 'draw/img/square3.png' %}";
+     // img3 = new Image();
+     // img3.src = testImage2;
+     // // ctx.drawImage(img, 0, 0);
+     // img2.onload = function () {
+     //     console.log("hi");
+     //     ctx.drawImage(img2, 0, 0,600,600);
+     // };
+     // img3.onload = function () {
+     //     console.log("hi");
+     //     ctx.drawImage(img3, 0, 0, 600, 600);
+     // };
+ }
+ $("#finish-merge").click(function () {
+     $("#merge-box").remove();
+     generateGraph(root);
+ });
+ // createMergeScreen();
  // var images = {0: };
  //placer holder image for now
  // update(root);
