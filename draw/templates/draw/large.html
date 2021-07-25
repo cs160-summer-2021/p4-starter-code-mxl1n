@@ -58,9 +58,36 @@
      #merge-wrapper {
          position: absolute;
          z-index: 100;
-         background-color: lightgrey;
+         border: 4px solid #111111;
+         border-radius: 3px;
+         padding: 30px;
          top: 150px;
          left: 500px;
+     }
+
+     #color-palette {
+         width: 60px;
+         background-color: #f1f1f1;
+         display: flex;
+         flex-wrap: wrap;
+         position: absolute;
+         left: 420px;
+         /* top: 0; */
+         top: 220px;
+         z-index: 100;
+     }
+
+     .swatch {
+         width: 24px;
+         height: 24px;
+         -moz-border-radius: 12px;
+         -webkit-border-radius: 12px;
+         border-radius: 12px;
+         margin: 3px;
+         border: 0.5px solid #777777;
+     }
+     .swatch:hover {
+         border: 2px solid #000;
      }
     </style>
 
@@ -77,13 +104,54 @@
         <div>suggestions</div>
         </div>
     </template>
+        <div id="color-palette"></div>
 </body>
+<script>
+//for color palette
+
+ // color palette
+ var cp = {
+     history: ["#000000"], // black selected by default
+     options: [],
+     $container: $('#color-palette')
+ }
+ // create a color palette with the given colors
+ function createColorPalette(colors){
+
+     // create a swatch for each color
+     for (var i = colors.length - 1; i >= 0; i--) {
+         var $swatch = $("<div>").css("background-color", colors[i])
+                                 .addClass("swatch");
+         $swatch.click(function(){
+             // add color to the color palette history
+             cp.history.push($(this).css("background-color"));
+         });
+         cp.$container.append($swatch);
+     }
+ }
+
+ // loads a set of colors from a json to create a color palette
+ function getColorsCreatePalette(){
+     cp.$container.html(" ");
+     $.getJSON('/static/draw/vendor/material/material-colors.json', function(colors){
+         var keys = Object.keys(colors);
+         for (var i = keys.length - 1; i >= 0; i--) {
+             cp.options.push(colors[keys[i]][500]);
+         }
+         createColorPalette(cp.options);
+     });
+ };
+ getColorsCreatePalette();
+ $("#color-palette").hide();
+</script>
+
+
 <script>
  // var testImage = new Image(100, 100);
  // source https://en.wiktionary.org/wiki/File:Square_-_black_simple.svg
     var socket = new WebSocket(
         'ws://' + window.location.host + '/ws/draw');
- socket.send("hello!")
+ socket.onopen = () => socket.send("hello!")
  var initImg = "{% static 'draw/img/square.png' %}";
  // testImage = "{% static 'draw/img/square.png' %}";//"/static/draw/img/stickfigure.jpg";
  // testImage2 = "{% static 'draw/img/square2.png' %}";
@@ -231,6 +299,8 @@
      d3.selectAll("svg > *").remove();
      // make stuff appear
      $("body").append($("#merge-box").html());
+
+     $("#color-palette").show();
      //setup canvas
      var mc = document.getElementById("merge-canvas");
      paper.setup(mc);
@@ -242,7 +312,7 @@
 
      tool.onMouseDown = function(event) { //http://paperjs.org/reference/tool/ path examples
          path = new paper.Path();
-         path.strokeColor = "black";
+         path.strokeColor = cp.history[cp.history.length - 1];
      path.strokeWidth = 3;
          // console.log(event.point);
          // You may need to add code here if you want to pass any other information.
@@ -284,6 +354,7 @@
          t.push(newNode);
          userPositions[uid] = t[t.length - 1];
          $("#merge-wrapper").remove();
+         $("#color-palette").hide();
          generateGraph(root);
      });
  }

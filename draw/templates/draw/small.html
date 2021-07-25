@@ -103,7 +103,6 @@ getColorsCreatePalette();
 </script>
 
 <script>
- sendInit();
     // setting up the canvas and one paper tool
     var canvas = document.getElementById('myCanvas');
     paper.setup(canvas);
@@ -124,6 +123,7 @@ getColorsCreatePalette();
     var socket = new WebSocket(
         'ws://' + window.location.host + '/ws/draw');
 
+ socket.onopen = () => sendInit();
  // tool.onMouseMove = function(event) { //http://paperjs.org/reference/tool/ path examples
  //     path.add(event.point);
  //     // console.log(event.point);
