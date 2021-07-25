@@ -285,8 +285,8 @@
                  // compute sum of two images and send it to both users
                  //
                  console.log(received);
-                 createMergeScreen(received.uid,parseInt(userPositions[received.uid].imgid), parseInt(received.data));
-                 drawMergeImages(userPositions[received.uid].imgid, received.data);
+                 createMergeScreen(received.uid,parseInt(userPositions[received.uid].imgid), userPositions[received.data].imgid);
+                 drawMergeImages(userPositions[received.uid].imgid, userPositions[received.data].imgid);
                  // drawMergeImages();
                  break;
              case "mergeDone":
