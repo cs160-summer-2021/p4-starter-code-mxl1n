@@ -171,7 +171,7 @@
  //dictionary of user id to pointer to node; default is everyone is the 1st image
  var userPositions = {};
  //dictionary of image ids to the image url
- var imageData = {0: initImg};
+ var imageData = {0: 0};
  // graph of images stored in root
  // format:
  // uid is who made it
@@ -294,7 +294,9 @@
                  // replace with new one with new image data
                  break;
              case "fetch":
-                 sendPull(received.uid, imageData[received.uid]);
+                 console.log(received);
+                 sendPull(received.uid, imageData[userPositions[received.uid].imgid]);
+                 break;
              case "endorse":
                  // add to some counter the image getting endorsed
                  break;

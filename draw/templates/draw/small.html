@@ -44,6 +44,15 @@
      }
     </style>
 
+<script type="text/javascript">
+ $("#push").click(function () {
+     console.log("lmao");
+     sendPush();
+ });
+ $("#pull").click(function () {
+     socket.send("{\"uid\" : " + uid + ",\"type\" : \"fetch\"" +  "}" );
+ });
+</script>
 </head>
 <body>
   <div id="container">
@@ -61,11 +70,12 @@
 <canvas id="myCanvas" width="500px" height="500px"></canvas>
 
 	<div id="color-palette"></div>
-<button type="button" id="push">Push</button>
-<button type="button" id="pull">Pull</button>
+    <!-- <button type="button" id="push">Push</button> -->
+    <input type="button" onclick="sendPush()" id="btn" value="Push">
+    <!-- <input type="button" onclick="mySendFetch()" id="btn" value="Pull"> -->
 </body>
 
-<script type="text/javascript">
+<script type="text/javascript" canvas="myCanvas">
 
 function multipleFunc() {
    document.getElementById("frame").multiple = true;
@@ -213,7 +223,9 @@ getColorsCreatePalette();
  function sendMerge(imgid) {
      socket.send("{\"uid\" : " + uid + ",\"type\" : \"merge\"" + ",\"data\" : " + imgid +"}" );
  }
-
+ function mySendFetch() {
+     socket.send("{\"uid\" : " + uid + ",\"type\" : \"fetch\"" +  "}" );
+ }
 
 
  if (displaySize.toLowerCase() == "large") {
@@ -246,14 +258,6 @@ getColorsCreatePalette();
  socket.onclose = function(e) {
      console.error('Chat socket closed unexpectedly');
  };
-
- $("#push").click(function () {
-     console.log("lmao");
-     sendPush();
- });
- $("#pull").click(function () {
-     socket.send("{\"uid\" : " + uid + ",\"type\" : \"fetch\"" +  "}" );
- });
 </script>
 
 
