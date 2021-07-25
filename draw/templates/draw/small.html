@@ -118,7 +118,6 @@ getColorsCreatePalette();
 </script>
 
 <script>
-
     // setting up the canvas and one paper tool
     var canvas = document.getElementById('myCanvas');
     paper.setup(canvas);
@@ -139,6 +138,7 @@ getColorsCreatePalette();
     var socket = new WebSocket(
         'ws://' + window.location.host + '/ws/draw');
 
+ socket.onopen = () => sendInit();
  // tool.onMouseMove = function(event) { //http://paperjs.org/reference/tool/ path examples
  //     path.add(event.point);
  //     // console.log(event.point);
@@ -148,7 +148,10 @@ getColorsCreatePalette();
  //    socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + ", \"color\" : \"" + collected[uid] +"\"}" );
  // }
 
-     tool.onMouseDown = function(event) { //http://paperjs.org/reference/tool/ path examples
+ if (!(dropList.includes(uid))){
+     dropList.push(uid);}
+ // socket.send("{\"uid\" : " + uid +"}" );
+ tool.onMouseDown = function(event) { //http://paperjs.org/reference/tool/ path examples
          path = new paper.Path();
          path.strokeColor = cp.history[cp.history.length-1];
          console.log(cp.history[-1]);
@@ -165,22 +168,48 @@ getColorsCreatePalette();
          socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + ", \"color\" : \"" + collected[uid] +"\"}" );
          //     for(i = 0; i < received.uid.length; i++){
      }
-
-
-    socket.onmessage = function(receivedMessage) {
-    var received = JSON.parse(receivedMessage.data);
-     if (!(dropList.includes(received.uid))){
-       dropList.push(received.uid)
-       for(i = 0; i < dropList.length; i++){
-       var para = document.createElement("option");
-       para.value= i
-       const node = document.createTextNode(dropList[i]);
-       para.appendChild(node);
-       const element = document.getElementById("framework");
-       element.appendChild(para);
+    // const btn = document.querySelector('#btn');
+    // const sb = document.querySelector('#framework')
+    // btn.onclick = (event) => {
+    //     event.preventDefault();
+    //
+    // sb.addEventListener('change', (event) => {
+    //   const result = document.querySelector('.result');
+    //   result.textContent = `You like ${event.target.value}`;
+    // });
+    //     alert("You endorsed User " + btn);
+    // };
+ socket.onmessage = function(receivedMessage) {
+     // console.log(receivedMessage);
+     if (receivedMessage == "hello!") {
+         sendInit();
      }
-      }
-    }
+     else {
+         var received = JSON.parse(receivedMessage.data);
+         if (!(dropList.includes(received.uid))){
+             dropList.push(received.uid)
+             for(i = 0; i < dropList.length; i++){
+                 var para = document.createElement("option");
+                 para.value= i
+                 const node = document.createTextNode(dropList[i]);
+                 para.appendChild(node);
+                 const element = document.getElementById("framework");
+                 element.appendChild(para);
+             }
+         }
+     }
+ }
+ function sendInit() {
+     socket.send("{\"uid\" : " + uid + ",\"type\" : \"init\"" +  "}" );
+ }
+ function sendPush() {
+     var imgURL = canvas.toDataURL();
+     socket.send("{\"uid\" : " + uid + ",\"type\" : \"push\"" + ",\"data\" : \"" + imgURL + "\"}" );
+ }
+ function sendMerge(imgid) {
+     socket.send("{\"uid\" : " + uid + ",\"type\" : \"merge\"" + ",\"data\" : " + imgid +"}" );
+ }
+
 
     socket.onmessage = function(receivedMessage) {
     var received = JSON.parse(receivedMessage.data);
