@@ -101,7 +101,14 @@
         <canvas id="merge-canvas" width="600px" height="600px"></canvas>
         <br>
         <button type="button" id="finish-merge">Finish Merge</button>
-        <div>suggestions</div>
+        <div id="tips">
+            <h2>Suggestions:</h2>
+            <ul>
+                <li>discuss with the person your merging with</li>
+                <li>check for stray marks</li>
+                <li>keep the colors consistent</li>
+            </ul>
+        </div>
         </div>
     </template>
         <div id="color-palette"></div>
@@ -147,6 +154,7 @@
 
 
 <script>
+ var showTips = true;
  // var testImage = new Image(100, 100);
  // source https://en.wiktionary.org/wiki/File:Square_-_black_simple.svg
     var socket = new WebSocket(
@@ -301,7 +309,9 @@
      d3.selectAll("svg > *").remove();
      // make stuff appear
      $("body").append($("#merge-box").html());
-
+     if (!showTips) {
+         $("#tips").hide();
+     }
      $("#color-palette").show();
      //setup canvas
      var mc = document.getElementById("merge-canvas");
