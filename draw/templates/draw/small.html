@@ -27,7 +27,7 @@
          position: absolute;
          left: 20px;
          /* top: 0; */
-         top: 70px;
+         top: 120px;
      }
 
      .swatch {
@@ -53,10 +53,21 @@
 
         </select>
 
-        <input type="button" id="btn" value="Endorse">
+        <input type="button" onclick="multipleFunc()" id="btn" value="Endorse">
     </form>
 </div>
-<div class="result"></div>
+
+<div style= id="second-container" top:0px;>
+  <form>
+      <label for="frame">Select 2 users</label>
+      <select id="frame" multiple>
+
+      </select>
+
+      <input type="submit" id="btn" value="Merge">
+  </form>
+</div>
+
     <!-- You may change the dimensions of this canvas -->
 <canvas id="myCanvas" width="500px" height="500px"></canvas>
 
@@ -64,6 +75,10 @@
 </body>
 
 <script>
+
+function multipleFunc() {
+   document.getElementById("frame").multiple = true;
+}
 //for color palette
 
  // color palette
@@ -147,20 +162,11 @@ getColorsCreatePalette();
          path.add(event.point);
          // console.log(event.point);
          // You may need to add code here if you want to pass any other information.
-         // socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + ", \"color\" : \"" + collected[uid] +"\"}" );
+         socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + ", \"color\" : \"" + collected[uid] +"\"}" );
          //     for(i = 0; i < received.uid.length; i++){
      }
-    const btn = document.querySelector('#btn');
-    const sb = document.querySelector('#framework')
-    btn.onclick = (event) => {
-        event.preventDefault();
 
-    sb.addEventListener('change', (event) => {
-      const result = document.querySelector('.result');
-      result.textContent = `You like ${event.target.value}`;
-    });
-        alert("You endorsed User " + btn);
-    };
+
     socket.onmessage = function(receivedMessage) {
     var received = JSON.parse(receivedMessage.data);
      if (!(dropList.includes(received.uid))){
@@ -171,6 +177,21 @@ getColorsCreatePalette();
        const node = document.createTextNode(dropList[i]);
        para.appendChild(node);
        const element = document.getElementById("framework");
+       element.appendChild(para);
+     }
+      }
+    }
+
+    socket.onmessage = function(receivedMessage) {
+    var received = JSON.parse(receivedMessage.data);
+     if (!(dropList.includes(received.uid))){
+       dropList.push(received.uid)
+       for(i = 0; i < dropList.length; i++){
+       var para = document.createElement("option");
+       para.value= i
+       const node = document.createTextNode(dropList[i]);
+       para.appendChild(node);
+       const element = document.getElementById("frame");
        element.appendChild(para);
      }
       }
@@ -207,16 +228,7 @@ getColorsCreatePalette();
         console.error('Chat socket closed unexpectedly');
     };
 
-/* When the user clicks on the button,
-toggle between hiding and showing the dropdown content */
 
-// Close the dropdown menu if the user clicks outside of it
-// const btn = document.querySelector('#btn');
-// const sb = document.querySelector('#framework')
-// btn.onclick = (event) => {
-//     event.preventDefault();
-//     alert("hooray");
-// };
 </script>
 
 
