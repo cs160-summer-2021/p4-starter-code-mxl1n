@@ -189,6 +189,10 @@ getColorsCreatePalette();
      var received = JSON.parse(receivedMessage.data);
      if ((!(dropList.includes(received.uid))) || (!(dropList.includes(uid)))) {
          dropList.push(received.uid);
+         var asdf = document.getElementById("framework");
+         for (var j = asdf.options.length - 1; j >= 0; j--) {
+             asdf.remove(j);
+         }
          for(i = 0; i < dropList.length; i++){
              var para = document.createElement("option");
              para.value= i
