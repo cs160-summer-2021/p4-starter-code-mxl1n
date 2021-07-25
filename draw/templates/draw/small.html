@@ -133,7 +133,10 @@ getColorsCreatePalette();
  //    socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + ", \"color\" : \"" + collected[uid] +"\"}" );
  // }
 
-     tool.onMouseDown = function(event) { //http://paperjs.org/reference/tool/ path examples
+ if (!(dropList.includes(uid))){
+     dropList.push(uid)}
+ socket.send("{\"uid\" : " + uid +"}" );
+ tool.onMouseDown = function(event) { //http://paperjs.org/reference/tool/ path examples
          path = new paper.Path();
          path.strokeColor = cp.history[cp.history.length-1];
          console.log(cp.history[-1]);
@@ -161,20 +164,22 @@ getColorsCreatePalette();
     });
         alert("You endorsed User " + btn);
     };
-    socket.onmessage = function(receivedMessage) {
-    var received = JSON.parse(receivedMessage.data);
+ socket.onmessage = function(receivedMessage) {
+     var received = JSON.parse(receivedMessage.data);
      if (!(dropList.includes(received.uid))){
-       dropList.push(received.uid)
-       for(i = 0; i < dropList.length; i++){
-       var para = document.createElement("option");
-       para.value= i
-       const node = document.createTextNode(dropList[i]);
-       para.appendChild(node);
-       const element = document.getElementById("framework");
-       element.appendChild(para);
+         dropList.push(received.uid)
+         for(i = 0; i < dropList.length; i++){
+             var para = document.createElement("option");
+             para.value= i
+             const node = document.createTextNode(dropList[i]);
+             para.appendChild(node);
+             const element = document.getElementById("framework");
+             element.appendChild(para);
+         }
      }
-      }
-    }
+ }
+
+
 
  if (displaySize.toLowerCase() == "large") {
 
