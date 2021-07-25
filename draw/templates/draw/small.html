@@ -27,7 +27,7 @@
          position: absolute;
          left: 20px;
          /* top: 0; */
-         top: 180px;
+         top: 150px;
      }
 
      .swatch {
@@ -128,6 +128,9 @@ getColorsCreatePalette();
  var path = new paper.Path();
  path.strokeColor = "black";
  var uid = Date.now() % 10000;
+var div = document.createElement("p");
+ div.innerHTML = "User ID: " + uid;
+document.body.appendChild(div);
  // otherPaths is a dictionary, keys are uid's (user ids) and values are paper.js paths
  var dropList=[];
  var otherPaths = {uid: path};
