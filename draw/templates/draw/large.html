@@ -21,6 +21,7 @@
          border: 2px solid #000;
          border-radius: 3px;
          margin: 20px;
+         overflow: scroll;
      }.circle {
 	  fill: #fff;
 	  stroke: steelblue;
@@ -72,8 +73,9 @@
         <h1>Merge in progress</h1>
         <canvas id="merge-canvas" width="600px" height="600px"></canvas>
         <br>
-        <button type="button" id="finish-merge">Finish Merge</button></div>
+        <button type="button" id="finish-merge">Finish Merge</button>
         <div>suggestions</div>
+        </div>
     </template>
 </body>
 <script>
@@ -89,7 +91,7 @@
  // img.src = testImage;
  // var img2 = new Image(600,600);
  // img2.src = testImage2;
- //dictionary of user id to the image id they are currently on; default is everyone is the 1st image
+ //dictionary of user id to pointer to node; default is everyone is the 1st image
  var userPositions = {};
  //dictionary of image ids to the image url
  var imageData = {0: initImg};
@@ -124,7 +126,7 @@
      // get the nodes, links of the tree
      var nodes = visualTree.descendants();
      var links = visualTree.links();
-     var svg = d3.select('body').append('svg').attr('width', 1600).attr('height', 1150);
+     var svg = d3.select('body').append('svg').attr('width', 2000).attr('height', 1150);
      var nodeHeight = 200;
      var nodeWidth = 200;
      var rootHeight = 350;
@@ -179,10 +181,11 @@
  // data: either going to be image id or image data
  socket.onmessage = function(receivedMessage) {
      var received = JSON.parse(receivedMessage.data);
-     if (uid >= 0) {
+     if (received.uid >= 0) {
          switch (received.type) {
              case "init":
                  //when a small screen is loaded, just the uid is sent
+                 userPositions[received.uid] = root;
                  break;
              case "branch":
                  // store uid position in some dictionary
@@ -191,12 +194,23 @@
                  break;
              case "push":
                  // create a new node in graph
+                 console.log(received);
+                 var newImgID = Date.now() % 10000;
+                 var newNode = {uid: received.uid, imgid: newImgID, meta: "", children: []};
+                 imageData[newImgID] = received.data;
+                 var tempPointer = userPositions[received.uid].children;
+                 tempPointer.push(newNode);
+                 userPositions[received.uid] = tempPointer[tempPointer.length -1];
+                 generateGraph(root);
                  // reload graph
                  break;
              case "merge":
                  // compute sum of two images and send it to both users
                  //
-                 createMergeScreen(userPositions[received.uid], received.data);
+                 console.log(received);
+                 createMergeScreen(received.uid,parseInt(userPositions[received.uid].imgid), parseInt(received.data));
+                 drawMergeImages(userPositions[received.uid].imgid, received.data);
+                 // drawMergeImages();
                  break;
              case "mergeDone":
                  // delete the two merged nodes
@@ -211,7 +225,7 @@
      }
  }
 
- function createMergeScreen(imgid1, imgid2) {
+ function createMergeScreen(uid, imgid1, imgid2) {
      //clear default screen
      d3.selectAll("svg > *").remove();
      // make stuff appear
@@ -223,6 +237,8 @@
      var path = new paper.Path();
      path.strokeColor = "black";
      path.strokeWidth = 3;
+     //put image in the canvas
+
      tool.onMouseDown = function(event) { //http://paperjs.org/reference/tool/ path examples
          path = new paper.Path();
          path.strokeColor = "black";
@@ -240,21 +256,6 @@
          // socket.send("{\"x\" : " + event.point.x + ", \"y\" : " + event.point.y + ", \"uid\" : " + uid + ", \"color\" : \"" + collected[uid] +"\"}" );
          //     for(i = 0; i < received.uid.length; i++){
      }
-     //put image in the canvas
-     var ctx = mc.getContext('2d');
-     // img.addEventListener("load", e => ctx.drawImage(img, 0, 0));
-     // console.log(img2);
-     // ctx.drawImage(img, 0, 0);
-     var mImg1 = new Image();
-     mImg1.src = imageData[imgid1];
-     var mImg2 = new Image();
-     mImg2.src = imageData[imgid2];
-     mImg1.onload = function () {
-         ctx.drawImage(mImg1, 0, 0,600,600);
-     };
-     mImg2.onload = function () {
-         ctx.drawImage(mImg2, 0, 0,600,600);
-     };
      // testImage2 = "{% static 'draw/img/square2.png' %}";
      // img2 = new Image();
      // img2.src = testImage2;
@@ -265,16 +266,57 @@
      // img2.onload = function () {
      //     console.log("hi");
      //     ctx.drawImage(img2, 0, 0,600,600);
+     //     console.log("hi");
      // };
      // img3.onload = function () {
      //     console.log("hi");
      //     ctx.drawImage(img3, 0, 0, 600, 600);
      // };
- $("#finish-merge").click(function () {
+     $("#finish-merge").click(function () {
 
-     $("#merge-box").remove();
-     generateGraph(root);
- });
+         var newImgID = Date.now() % 10000;
+         var mc = document.getElementById("merge-canvas");
+         var imgURL = mc.toDataURL();
+         var newNode = {uid: uid, imgid: newImgID, meta: "(Merged from " +imgid2+ ")", children: []};
+         imageData[newImgID] = imgURL;
+         var t = userPositions[uid].children;
+         t.push(newNode);
+         userPositions[uid] = t[t.length - 1];
+         $("#merge-wrapper").remove();
+         generateGraph(root);
+     });
+ }
+ function drawMergeImages(imgid1, imgid2) {
+     console.log(imgid1, imgid2);
+     console.log(typeof(imgid1), typeof(imgid2));
+     var mc = document.getElementById("merge-canvas");
+     $("#merge-canvas").ready(function () {
+     var ctx = mc.getContext('2d');
+     // img.addEventListener("load", e => ctx.drawImage(img, 0, 0));
+     // console.log(img2);
+     // ctx.drawImage(img, 0, 0);
+     // console.log(typeof(imageData[imgid2]), typeof(imageData[imgid1]));
+     // console.log(typeof(imgid1), typeof(imgid2));
+         // var mImg1 = new Image();
+         // mImg1.src = imageData[imgid1];
+         // mImg1.onload = function () {
+         //     ctx.drawImage(mImg1, 0, 0, 600, 600);
+         //     console.log(mImg1);
+         //     console.log("yeet");
+         // };
+         // ctx.drawImage(mImg1, 0, 0, 600, 600);
+         // var mImg2 = new Image();
+         // mImg2.onload = function () {
+         //     ctx.drawImage(mImg2, 0, 0, 600, 600);
+         // };
+         // mImg2.src = imageData[imgid2];
+         //     ctx.drawImage(mImg2, 0, 0, 600, 600);
+     });
+     var size = new paper.Size(600,600);
+     var raster = new paper.Raster({source: imageData[imgid1], position: paper.view.center});
+     raster.size = size;
+     var raster2 = new paper.Raster({source: imageData[imgid2], position: paper.view.center});
+     raster2.size = size;
  }
  // createMergeScreen();
  // var images = {0: };

@@ -134,8 +134,8 @@ getColorsCreatePalette();
  // }
 
  if (!(dropList.includes(uid))){
-     dropList.push(uid)}
- socket.send("{\"uid\" : " + uid +"}" );
+     dropList.push(uid);}
+ // socket.send("{\"uid\" : " + uid +"}" );
  tool.onMouseDown = function(event) { //http://paperjs.org/reference/tool/ path examples
          path = new paper.Path();
          path.strokeColor = cp.history[cp.history.length-1];
@@ -165,6 +165,7 @@ getColorsCreatePalette();
         alert("You endorsed User " + btn);
     };
  socket.onmessage = function(receivedMessage) {
+     console.log(receivedMessage);
      var received = JSON.parse(receivedMessage.data);
      if (!(dropList.includes(received.uid))){
          dropList.push(received.uid)
@@ -178,7 +179,16 @@ getColorsCreatePalette();
          }
      }
  }
-
+ function sendInit() {
+     socket.send("{\"uid\" : " + uid + ",\"type\" : \"init\"" +  "}" );
+ }
+ function sendPush() {
+     var imgURL = canvas.toDataURL();
+     socket.send("{\"uid\" : " + uid + ",\"type\" : \"push\"" + ",\"data\" : \"" + imgURL + "\"}" );
+ }
+ function sendMerge(imgid) {
+     socket.send("{\"uid\" : " + uid + ",\"type\" : \"merge\"" + ",\"data\" : " + imgid +"}" );
+ }
 
 
  if (displaySize.toLowerCase() == "large") {
