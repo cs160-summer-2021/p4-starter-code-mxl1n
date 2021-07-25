@@ -83,6 +83,7 @@
  // source https://en.wiktionary.org/wiki/File:Square_-_black_simple.svg
     var socket = new WebSocket(
         'ws://' + window.location.host + '/ws/draw');
+ socket.send("hello!")
  var initImg = "{% static 'draw/img/square.png' %}";
  // testImage = "{% static 'draw/img/square.png' %}";//"/static/draw/img/stickfigure.jpg";
  // testImage2 = "{% static 'draw/img/square2.png' %}";
