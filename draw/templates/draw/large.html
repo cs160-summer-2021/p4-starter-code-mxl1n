@@ -355,8 +355,13 @@
          userPositions[uid] = t[t.length - 1];
          $("#merge-wrapper").remove();
          $("#color-palette").hide();
+         sendPull(uid, imgURL);
          generateGraph(root);
      });
+ }
+
+ function sendPull(uid, imgURL) {
+     socket.send("{\"uid\" : " + uid + ",\"type\" : \"pull\"" + ",\"data\" : \"" + imgURL + "\"}" );
  }
  function drawMergeImages(imgid1, imgid2) {
      console.log(imgid1, imgid2);

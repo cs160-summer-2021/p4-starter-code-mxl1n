@@ -122,7 +122,7 @@ getColorsCreatePalette();
     var displaySize = params.get("size");
     var socket = new WebSocket(
         'ws://' + window.location.host + '/ws/draw');
-
+    var rasterList = [];
  socket.onopen = () => sendInit();
  // tool.onMouseMove = function(event) { //http://paperjs.org/reference/tool/ path examples
  //     path.add(event.point);
@@ -180,6 +180,23 @@ getColorsCreatePalette();
                  para.appendChild(node);
                  const element = document.getElementById("framework");
                  element.appendChild(para);
+             }
+         }
+         if (received.type == "pull") {
+             if (uid == received.uid) {
+                 if (rasterList.length > 0) {
+                     for (var a of rasterList) {
+                         a.remove();
+                     }
+                 }
+                 var canvas = document.getElementById('myCanvas');
+                 var ctx = canvas.getContext('2d');
+                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+                 paper.project.activeLayer.removeChildren();
+                 // var size1 = new paper.Size(canvas.width,canvas.height);
+                 var raster = new paper.Raster({source: received.data, position: paper.view.center});
+                 raster.scale(0.62);
+                 rasterList.push(raster);
              }
          }
      }
