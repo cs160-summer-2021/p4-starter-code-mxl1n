@@ -82,6 +82,7 @@
 function multipleFunc() {
      document.getElementById("framework").multiple = true;
      var e = document.getElementById("framework");
+     console.log(e);
      sendMerge(e.value);
 }
 //for color palette
@@ -195,7 +196,7 @@ getColorsCreatePalette();
          }
          for(i = 0; i < dropList.length; i++){
              var para = document.createElement("option");
-             para.value= i
+             para.value= dropList[i];
              const node = document.createTextNode(dropList[i]);
              para.appendChild(node);
              const element = document.getElementById("framework");
