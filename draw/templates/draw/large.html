@@ -259,6 +259,9 @@
  socket.onmessage = function(receivedMessage) {
      var received = JSON.parse(receivedMessage.data);
      if (received.uid >= 0) {
+         if (!(received.uid in userPositions)) {
+             userPositions[received.uid] = root;
+         }
          switch (received.type) {
              case "init":
                  //when a small screen is loaded, just the uid is sent
