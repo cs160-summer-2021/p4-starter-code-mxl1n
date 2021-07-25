@@ -27,7 +27,7 @@
          position: absolute;
          left: 20px;
          /* top: 0; */
-         top: 120px;
+         top: 180px;
      }
 
      .swatch {
@@ -72,6 +72,8 @@
 <canvas id="myCanvas" width="500px" height="500px"></canvas>
 
 	<div id="color-palette"></div>
+<button type="button" id="push">Push</button>
+<button type="button" id="pull">Pull</button>
 </body>
 
 <script>
@@ -194,7 +196,7 @@ getColorsCreatePalette();
                  para.value= i
                  const node = document.createTextNode(dropList[i]);
                  para.appendChild(node);
-                 const element = document.getElementById("framework");
+                 const element = document.getElementById("frame");
                  element.appendChild(para);
              }
          }
@@ -262,7 +264,12 @@ getColorsCreatePalette();
         console.error('Chat socket closed unexpectedly');
     };
 
-
+ $("#push").click(function () {
+     sendPush();
+ });
+ $("#pull").click(function () {
+     socket.send("{\"uid\" : " + uid + ",\"type\" : \"fetch\"" +  "}" );
+ });
 </script>
 
 

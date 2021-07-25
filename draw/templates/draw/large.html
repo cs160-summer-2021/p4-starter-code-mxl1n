@@ -285,6 +285,8 @@
                  // delete the two merged nodes
                  // replace with new one with new image data
                  break;
+             case "fetch":
+                 sendPull(received.uid, imageData[received.uid]);
              case "endorse":
                  // add to some counter the image getting endorsed
                  break;
